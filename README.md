@@ -1,4 +1,4 @@
-# Social-Backend-API
+# Social-Backend-API - Important point is that project- folder name, myp-virtual env name
 Social-Backend-API is a lightweight RESTful API service designed to simulate a basic social networking backend. It enables user registration, authentication, friend management, and basic user discovery features. Built with security, scalability, and extensibility in mind, this service is ideal for social networking applications or as a backend module in larger systems.
 
 Follow these steps to set up and run the project locally
