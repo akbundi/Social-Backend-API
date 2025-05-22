@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Social App</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: auto; padding: 20px; }
+        input, button, select { margin: 5px; padding: 8px; }
+        section { margin-bottom: 30px; }
+        label { display: block; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>Social Backend Frontend</h1>
+
+    <section>
+        <h2>Register</h2>
+        <label>Name <input type="text" id="reg-name" placeholder="Name"></label>
+        <label>Email <input type="email" id="reg-email" placeholder="Email"></label>
+        <label>Password <input type="password" id="reg-password" placeholder="Password"></label>
+        <button onclick="register()">Register</button>
+    </section>
+
+    <section>
+        <h2>Login</h2>
+        <label>Email <input type="email" id="login-email" placeholder="Email"></label>
+        <label>Password <input type="password" id="login-password" placeholder="Password"></label>
+        <button onclick="login()">Login</button>
+    </section>
+
+    <section>
+        <h2>Profile</h2>
+        <button onclick="getProfile()">Get Profile</button>
+        <pre id="profile"></pre>
+        <h3>Update Profile</h3>
+        <label>New Name <input type="text" id="update-name" placeholder="New Name"></label>
+        <label>Bio <input type="text" id="update-bio" placeholder="Bio"></label>
+        <button onclick="updateProfile()">Update Profile</button>
+    </section>
+
+    <section>
+        <h2>All Users (Except Self)</h2>
+        <input type="text" id="search-name" placeholder="Search by name">
+        <button onclick="listUsers()">List Users</button>
+        <ul id="user-list"></ul>
+    </section>
+
+    <section>
+        <h2>Friend Suggestions</h2>
+        <button onclick="getSuggestions()">Get Suggestions</button>
+        <ul id="suggestions"></ul>
+    </section>
+
+    <section>
+        <h2>Send Friend Request</h2>
+        <input type="number" id="friend-id" placeholder="User ID">
+        <button onclick="sendFriendRequest()">Send Request</button>
+    </section>
+
+    <section>
+        <h2>Respond to Friend Request</h2>
+        <input type="number" id="request-id" placeholder="User ID">
+        <select id="response-action">
+            <option value="accept">Accept</option>
+            <option value="reject">Reject</option>
+        </select>
+        <button onclick="respondToRequest()">Respond</button>
+    </section>
+
+    <section>
+        <h2>Friends</h2>
+        <button onclick="getFriends()">List Friends</button>
+        <ul id="friend-list"></ul>
+    </section>
+
+    <script>
+        const API_BASE = "http://localhost:8000";
+        let token = "";
+
+        function setAuthHeader(headers = {}) {
+            if (token) headers["Authorization"] = `Bearer ${token}`;
+            return headers;
+        }
+
+        async function register() {
+            const name = document.getElementById("reg-name").value;
+            const email = document.getElementById("reg-email").value;
+            const password = document.getElementById("reg-password").value;
+
+            const res = await fetch(`${API_BASE}/auth/register`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, email, password })
+            });
+            alert(await res.text());
+        }
+
+        async function login() {
+            const email = document.getElementById("login-email").value;
+            const password = document.getElementById("login-password").value;
+
+            const res = await fetch(`${API_BASE}/auth/login`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            token = data.access_token;
+            alert("Logged in successfully");
+        }
+
+        async function getProfile() {
+            const res = await fetch(`${API_BASE}/users/me`, { headers: setAuthHeader() });
+            document.getElementById("profile").textContent = JSON.stringify(await res.json(), null, 2);
+        }
+
+        async function updateProfile() {
+            const name = document.getElementById("update-name").value;
+            const bio = document.getElementById("update-bio").value;
+
+            const res = await fetch(`${API_BASE}/users/me`, {
+                method: "PUT",
+                headers: setAuthHeader({ "Content-Type": "application/json" }),
+                body: JSON.stringify({ name, bio })
+            });
+            alert(await res.text());
+        }
+
+        async function listUsers() {
+            const query = document.getElementById("search-name").value;
+            const res = await fetch(`${API_BASE}/users?search=${query}&page=1&size=10`, { headers: setAuthHeader() });
+            const users = await res.json();
+            document.getElementById("user-list").innerHTML = users.map(u => `<li>${u.name} (ID: ${u.id})</li>`).join("");
+        }
+
+        async function getSuggestions() {
+            const res = await fetch(`${API_BASE}/friends/suggestions`, { headers: setAuthHeader() });
+            const users = await res.json();
+            document.getElementById("suggestions").innerHTML = users.map(u => `<li>${u.name} (ID: ${u.id})</li>`).join("");
+        }
+
+        async function sendFriendRequest() {
+            const id = document.getElementById("friend-id").value;
+            const res = await fetch(`${API_BASE}/friends/request/${id}`, {
+                method: "POST",
+                headers: setAuthHeader()
+            });
+            alert(await res.text());
+        }
+
+        async function respondToRequest() {
+            const id = document.getElementById("request-id").value;
+            const action = document.getElementById("response-action").value;
+            const res = await fetch(`${API_BASE}/friends/respond/${id}?action=${action}`, {
+                method: "POST",
+                headers: setAuthHeader()
+            });
+            alert(await res.text());
+        }
+
+        async function getFriends() {
+            const res = await fetch(`${API_BASE}/friends/list`, { headers: setAuthHeader() });
+            const friends = await res.json();
+            document.getElementById("friend-list").innerHTML = friends.map(f => `<li>${f.name} (ID: ${f.id})</li>`).join("");
+        }
+    </script>
+</body>
+</html>
